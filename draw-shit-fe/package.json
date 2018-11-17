@@ -3,9 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "history": "^4.7.2",
     "react": "^16.6.3",
     "react-dom": "^16.6.3",
-    "react-scripts-ts": "3.1.0"
+    "react-router-dom": "^4.3.1",
+    "react-scripts-ts": "3.1.0",
+    "react-sketch": "^0.4.4",
+    "request-promise": "^4.2.2",
+    "semantic-ui-css": "^2.4.1",
+    "semantic-ui-react": "^0.83.0",
+    "socket.io-client": "^2.1.1"
   },
   "scripts": {
     "start": "react-scripts-ts start",
@@ -14,10 +21,14 @@
     "eject": "react-scripts-ts eject"
   },
   "devDependencies": {
+    "@types/history": "^4.7.2",
     "@types/jest": "^23.3.9",
     "@types/node": "^10.12.9",
     "@types/react": "^16.7.6",
     "@types/react-dom": "^16.0.9",
+    "@types/react-router-dom": "^4.3.1",
+    "@types/request-promise": "^4.1.42",
+    "@types/socket.io-client": "^1.4.32",
     "typescript": "^3.1.6"
   }
 }

@@ -1,20 +1,30 @@
-import * as React from 'react';
-import './App.css';
+import "semantic-ui-css/semantic.min.css";
+import "./App.css";
 
-import logo from './logo.svg';
+import { createBrowserHistory } from "history";
+import * as React from "react";
+import { Route, Router, Switch } from "react-router";
+
+import { DrawShitContainer } from "./containers/draw/draw";
+import { JoinRoomContainer } from "./containers/join/join-room";
+import { StartContainer } from "./containers/start/start";
+
+const customHistory = createBrowserHistory();
 
 class App extends React.Component {
   public render() {
     return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h1 className="App-title">Welcome to React</h1>
-        </header>
-        <p className="App-intro">
-          To get started, edit <code>src/App.tsx</code> and save to reload.
-        </p>
-      </div>
+      <Router history={customHistory}>
+        <Switch>
+          <Route exact={true} path="/" component={JoinRoomContainer} />
+          <Route exact={true} path="/start/:room" component={StartContainer} />
+          <Route
+            exact={true}
+            path="/draw/:room"
+            component={DrawShitContainer}
+          />
+        </Switch>
+      </Router>
     );
   }
 }
