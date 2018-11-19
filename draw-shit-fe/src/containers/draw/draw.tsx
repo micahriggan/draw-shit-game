@@ -11,44 +11,77 @@ import {
   Loader,
   Placeholder
 } from "semantic-ui-react";
-import drawshit from "../../drawshit.png";
+import { WithSocket } from "../../contexts/SocketContext";
+
+import * as SocketIO from "socket.io-client";
 
 export interface Challenge {
   type: "image" | "phrase";
   payload: string;
+  id: string;
+}
+
+interface Props extends RouteComponentProps<{ room: string }> {
+  socket: typeof SocketIO.Socket;
 }
 interface State {
+  width: number;
+  height: number;
   currentIndex: number;
   roomCode: string;
   pending: Challenge[];
   attempt?: Challenge;
 }
 
-export class DrawShitContainer extends React.Component<
-  RouteComponentProps<{ room: string }>,
-  State
-> {
+@WithSocket
+export class DrawShitContainer extends React.Component<Props, State> {
   public state: State = {
+    width: window.innerWidth,
+    height: window.innerHeight,
     attempt: undefined,
     currentIndex: 0,
-    pending: [
-      { type: "phrase", payload: drawshit },
-      { type: "image", payload: "Dickbutt" }
-    ],
+    pending: [],
     roomCode: ""
   };
 
-  private sketch: { redo: () => void; undo: () => void };
+  private sketch: {
+    redo: () => void;
+    undo: () => void;
+    toDataURL: () => string;
+  };
   constructor(props) {
     super(props);
+    this.updateWindowDimensions = this.updateWindowDimensions.bind(this);
     this.handleUndoClick = this.handleUndoClick.bind(this);
     this.handleRedoClick = this.handleRedoClick.bind(this);
-    this.handleGuessUpdate = this.handleGuessUpdate.bind(this);
-    this.handleGuessClick = this.handleGuessClick.bind(this);
+    this.handleGuessTextUpdate = this.handleGuessTextUpdate.bind(this);
+    this.handleSubmissionClick = this.handleSubmissionClick.bind(this);
+    this.handleImageSubmissionClick = this.handleImageSubmissionClick.bind(
+      this
+    );
+    this.currentState = this.currentState.bind(this);
   }
 
   public componentDidMount() {
-    this.setState({ roomCode: this.props.match.params.room });
+    this.updateWindowDimensions();
+    window.addEventListener("resize", this.updateWindowDimensions);
+
+    const roomCode = this.props.match.params.room;
+    this.setState({ roomCode });
+    window.console.log("joining room", roomCode);
+    this.props.socket.emit("room:join", roomCode);
+    this.props.socket.on("challenge", (challenge: Challenge) => {
+      window.console.log(challenge);
+      this.setState({ pending: this.state.pending.concat([challenge]) });
+    });
+  }
+
+  public componentWillUnmount() {
+    window.removeEventListener("resize", this.updateWindowDimensions);
+  }
+
+  public updateWindowDimensions() {
+    this.setState({ width: window.innerWidth, height: window.innerHeight });
   }
 
   public handleUndoClick() {
@@ -64,7 +97,11 @@ export class DrawShitContainer extends React.Component<
     const height = window.innerHeight - 250 + "px";
     return (
       <div>
-        <Icon size="huge" name="save" onClick={this.handleGuessClick} />
+        <Icon
+          size="huge"
+          name="save"
+          onClick={this.handleImageSubmissionClick}
+        />
         <Header as="h2">Draw: {toGuess.payload}</Header>
 
         <SketchField
@@ -85,37 +122,48 @@ export class DrawShitContainer extends React.Component<
     return this.state.pending[this.state.currentIndex];
   }
 
-  public handleGuessUpdate(event: React.FormEvent<HTMLInputElement>) {
-    const currentToGuess = this.state.pending[this.state.currentIndex];
+  public handleGuessTextUpdate(event: React.FormEvent<HTMLInputElement>) {
+    const { type, id } = this.currentState();
     this.setState({
       attempt: {
-        type: currentToGuess.type,
+        type,
+        id,
         payload: event.currentTarget.value
       }
     });
   }
 
-  public handleGuessClick() {
+  public async handleImageSubmissionClick() {
+    const { type, id } = this.currentState();
+    const attempt = { type, payload: this.sketch.toDataURL(), id };
+    window.console.log(attempt);
+    await this.setState({ attempt });
+    this.handleSubmissionClick();
+  }
+
+  public handleSubmissionClick() {
+    const attempt = this.state.attempt;
+    window.console.log("attempt", attempt);
+    this.props.socket.emit("submission", attempt);
     this.setState({
-      currentIndex: this.state.currentIndex + 1
+      currentIndex: this.state.currentIndex + 1,
+      attempt: undefined
     });
   }
 
   public guessPictureComponent(toGuess: Challenge) {
     const currentValue = this.state.attempt ? this.state.attempt.payload : "";
-    const width = window.innerWidth + "px";
-    const height = window.innerHeight - 250 + "px";
 
     return (
       <div>
-        <Image src={toGuess.payload} height={height} width={width} />
+        <Image src={toGuess.payload}/>
         <Header as="h2">WTF Is it</Header>
         <Input
-          onChange={this.handleGuessUpdate}
+          onChange={this.handleGuessTextUpdate}
           value={currentValue}
           action={
-            <Button primary={true} onClick={this.handleGuessClick}>
-            I got this...
+            <Button primary={true} onClick={this.handleSubmissionClick}>
+              I got this...
             </Button>
           }
         />

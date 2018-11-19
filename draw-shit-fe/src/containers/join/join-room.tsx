@@ -19,6 +19,7 @@ export class JoinRoomContainer extends React.Component<
     super(props);
     this.handleJoinClick = this.handleJoinClick.bind(this);
     this.handleUpdateRoomCode = this.handleUpdateRoomCode.bind(this);
+    this.handleRequestNewRoom = this.handleRequestNewRoom.bind(this);
   }
 
   public handleUpdateRoomCode(event: React.FormEvent<HTMLInputElement>) {
@@ -60,7 +61,7 @@ export class JoinRoomContainer extends React.Component<
               }
             />
             <Header as="h3">OR</Header>
-            <Button primary={true}>Create Game</Button>
+            <Button primary={true} onClick={this.handleRequestNewRoom}>Create Game</Button>
           </div>
         </Card.Content>
       </Card>
